@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business Money Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f7f9;--panel:#fff;--ink:#16181d;--muted:#667085;--line:#e4e7ec;
+  --brand:#2b59c3;--brand-soft:#e8eefb;--in:#12805c;--in-soft:#e5f5ee;
+  --out:#c4320a;--out-soft:#fdece6;--warn:#b54708;--warn-soft:#fef4e6;
+  --pc:#6941c6;--pc-soft:#f1ecfc;--wifi:#0e7090;--wifi-soft:#e0f2f7;--store:#c11574;--store-soft:#fdeaf3;
+  --radius:12px;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1115;--panel:#171a21;--ink:#eceef2;--muted:#98a2b3;--line:#262b35;
+  --brand:#7aa2ff;--brand-soft:#1c2540;--in:#4cc38a;--in-soft:#15291f;
+  --out:#ff8a65;--out-soft:#331a12;--warn:#f5b55b;--warn-soft:#30230f;
+  --pc:#b39cf7;--pc-soft:#251d3d;--wifi:#5fc6e0;--wifi-soft:#10282f;--store:#f48fc4;--store-soft:#361528;--shadow:none}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--brand)}
+.app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+.app>*{min-width:0}
+nav{background:var(--panel);border-right:1px solid var(--line);padding:18px 12px;position:sticky;top:0;height:100vh}
+.brand{font-weight:700;font-size:16px;padding:4px 10px 2px}
+.brand small{display:block;font-weight:500;color:var(--muted);font-size:12px}
+nav a{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;font-weight:500;margin-top:2px}
+nav a:hover{background:var(--bg)}
+nav a.on{background:var(--brand-soft);color:var(--brand)}
+nav svg{width:18px;height:18px;flex:none}
+.navlist{margin-top:18px}
+.sync{position:absolute;bottom:16px;left:22px;right:12px;font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.ok{background:var(--in)}.dot.warn{background:var(--warn)}
+main{padding:24px 28px 60px;max-width:1200px;width:100%}
+h1{font-size:22px;margin:0 0 4px}
+h3{margin:0 0 10px;font-size:15px}
+.sub{color:var(--muted);margin:0 0 18px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr))}
+.two{grid-template-columns:1fr 1fr}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.kpi .l{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.kpi .v{font-size:24px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .h{font-size:12px;color:var(--muted);margin-top:2px}
+.in{color:var(--in)}.out{color:var(--out)}
+.btn{border:1px solid var(--line);background:var(--panel);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:500;text-decoration:none;color:var(--ink);display:inline-block}
+.btn:hover{background:var(--bg)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.green{background:var(--in);border-color:var(--in);color:#fff}
+.btn.red{background:var(--out);border-color:var(--out);color:#fff}
+.btn.primary:hover,.btn.green:hover,.btn.red:hover{filter:brightness(1.07)}
+.btn.ghost-red{color:var(--out)}
+.btn.sm{padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+input,select,textarea{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:8px 10px;min-width:0;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand-soft);border-color:var(--brand)}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;background:var(--bg);color:var(--muted);white-space:nowrap}
+.tag.pc{background:var(--pc-soft);color:var(--pc)}
+.tag.store{background:var(--store-soft);color:var(--store)}
+.tag.wifi{background:var(--wifi-soft);color:var(--wifi)}
+.tag.open{background:var(--warn-soft);color:var(--warn)}
+.tag.done{background:var(--in-soft);color:var(--in)}
+.empty{color:var(--muted);text-align:center;padding:28px 10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel)}
+.seg button{border:0;background:transparent;padding:7px 12px;cursor:pointer;white-space:nowrap}
+.seg button.on{background:var(--brand);color:#fff}
+.seg.io button.on.i{background:var(--in)}
+.seg.io button.on.o{background:var(--out)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+.form label{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:500}
+.full{grid-column:1/-1}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.modal{background:var(--panel);border-radius:14px;padding:20px;width:min(560px,100%);max-height:90vh;overflow:auto}
+.modal h2{margin:0 0 14px;font-size:18px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;z-index:20}
+.chart text{fill:var(--muted);font-size:11px}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.banner{background:var(--warn-soft);color:var(--warn);padding:10px 14px;border-radius:10px;margin-bottom:16px;font-weight:500}
+.pcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.pcgrid label{display:grid;gap:3px;font-size:12px;color:var(--muted);font-weight:600}
+.bizcard{border-left:4px solid var(--pc)}
+.bizcard.store{border-left-color:var(--store)}
+.bizcard.wifi{border-left-color:var(--wifi)}
+.three{grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr))}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
+.mini div{font-size:12px;color:var(--muted)}
+.mini b{display:block;font-size:17px;color:var(--ink);font-variant-numeric:tabular-nums}
+.bar-row{display:grid;grid-template-columns:90px 1fr auto;gap:10px;align-items:center;padding:5px 0}
+.bar-bg{height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.bar-fg{height:100%;border-radius:4px}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  nav{position:sticky;top:0;height:auto;z-index:5;padding:8px;display:flex;align-items:center;gap:6px;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
+  .brand small,.sync{display:none}
+  .brand{white-space:nowrap}
+  .navlist{display:flex;margin:0;gap:2px}
+  nav a{white-space:nowrap;padding:7px 9px}
+  nav a span{display:none}
+  nav a.on span{display:inline}
+  main{padding:16px}
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpi .v{font-size:19px}
+  .two{grid-template-columns:1fr}
+  .hide-sm{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav>
+    <div class="brand">Money Tracker<small>3 businesses, 1 view</small></div>
+    <div class="navlist" id="navlist"></div>
+    <div class="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Connecting…</span></div>
+  </nav>
+  <main id="view"></main>
+</div>
+<div id="modalRoot"></div>
+
+<script>
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const peso = n => { n=Number(n)||0; return (n<0?"−":"")+"₱"+Math.abs(n).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2}); };
+const peso0 = n => { n=Math.round(Number(n)||0); return (n<0?"−":"")+"₱"+Math.abs(n).toLocaleString("en-PH"); };
+const num = v => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
+const pad2 = n => String(n).padStart(2,"0");
+const dayKey = ts => { const d=new Date(ts); return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); };
+const todayKey = () => dayKey(Date.now());
+const keyToTs = k => { const [y,m,d]=k.split("-").map(Number); return new Date(y,m-1,d,12).getTime(); };
+const fmtD = ts => new Date(ts).toLocaleDateString("en-PH",{month:"short",day:"numeric",year:"numeric"});
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+function toast(msg){ const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2400); }
+
+const BIZ = { pc:"Computer Shop", store:"Sari-Sari Store", wifi:"Piso WiFi" };
+const bizTag = b => `<span class="tag ${b}">${({pc:"Computer Shop",store:"Sari-Sari",wifi:"Piso WiFi"})[b]||esc(b)}</span>`;
+const CATS = {
+  pc:   { in:["PC rental (cash)","Printing / Xerox","Load / E-load","Other income"],
+          out:["Electricity","Internet","Rent","Salary","Supplies (paper, ink)","Other expense"] },
+  store:{ in:["Sales","Load / E-load","Other income"],
+          out:["Restock / Grocery","Electricity","Rent","Salary","Other expense"] },
+  wifi: { in:["Other income"],
+          out:["Internet","Electricity","Machine repair / parts","Other expense"] },
+};
+const ICONS = {
+  dashboard:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>',
+  ledger:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l-4-4 4-4"/><path d="M3 13h11"/><path d="M17 7l4 4-4 4"/><path d="M21 11H10"/></svg>',
+  coins:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M9 15v3c0 1.7 2.7 3 6 3s6-1.3 6-3v-5c0-1.7-2.7-3-6-3"/></svg>',
+  maint:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>',
+  wifi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5a10 10 0 0 1 14 0"/><path d="M8.5 16a5 5 0 0 1 7 0"/><path d="M2 9a15 15 0 0 1 20 0"/><circle cx="12" cy="19.5" r="1"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+};
+const VIEWS = [["dashboard","Dashboard"],["ledger","Money In / Out"],["coins","Coin Collection"],["wifi","Piso WiFi"],["maint","PC Maintenance"],["settings","Settings"]];
+
+/* ================= state ================= */
+const DEFAULT_PCS = Array.from({length:10},(_,i)=>"PC-"+pad2(i+1));
+const S = {
+  entries:[], coins:[], wifi:[], maint:[], settings:{pcs:DEFAULT_PCS, wifiUnits:["WiFi-1"], capital:250000},
+  mode:"local", canWrite:true,
+  dash:{period:"month"}, led:{biz:"all", type:"all", period:"month", q:""},
+  coinRange:"month", wifiRange:"month", mFilter:"all",
+  draft:{ biz:"pc", type:"in" }
+};
+let db = null;
+
+/* ================= storage (shared db; falls back to this browser) ================= */
+const LS = {
+  load(k){ try{ return JSON.parse(localStorage.getItem("mt_"+k)) }catch(e){ return null } },
+  save(k,v){ try{ localStorage.setItem("mt_"+k, JSON.stringify(v)) }catch(e){} }
+};
+function setSync(state, txt){ $("#syncDot").className = "dot " + state; $("#syncTxt").textContent = txt; }
+async function writeDoc(coll, id, data){
+  if (db){ try{ await db.collection(coll).doc(id).set(data); }catch(e){ handleErr(e); throw e; } }
+  else { const arr=S[coll]; const i=arr.findIndex(x=>x.id===id); const rec={...data,id}; if(i>=0)arr[i]=rec; else arr.push(rec); LS.save(coll,arr); render(); }
+}
+async function patchDoc(coll, id, data){
+  if (db){ try{ await db.collection(coll).doc(id).update(data); }catch(e){ handleErr(e); throw e; } }
+  else { const r=S[coll].find(x=>x.id===id); if(r) Object.assign(r,data); LS.save(coll,S[coll]); render(); }
+}
+async function deleteDoc(coll, id){
+  if (db){ try{ await db.collection(coll).doc(id).delete(); }catch(e){ handleErr(e); throw e; } }
+  else { S[coll]=S[coll].filter(x=>x.id!==id); LS.save(coll,S[coll]); render(); }
+}
+async function saveSettings(data){
+  S.settings = data;
+  if (db){ try{ await db.doc("settings/main").set(data); }catch(e){ handleErr(e); } } else LS.save("settings",data);
+  render();
+}
+function handleErr(e){
+  if (e && e.code==="invalid_argument"){ S.canWrite=false; toast("You have view-only access."); render(); }
+  else if (e && e.code==="quota_exceeded") toast("Storage is full — delete old records to add more.");
+  else toast("Couldn't save. Please try again.");
+}
+function subscribe(){
+  let pending = 5;
+  const timer = setTimeout(()=>{ if(pending>0) setSync("warn","Can't reach data yet"); },10000);
+  const done = snap => { if(!snap.metadata.fromCache && pending>0){ pending--; if(!pending){ clearTimeout(timer); setSync("ok","Synced · shared with your team"); } } };
+  const fail = () => { clearTimeout(timer); setSync("warn","Sync stopped — reopen the app"); };
+  for (const c of ["entries","coins","wifi","maint"]){
+    db.collection(c).onSnapshot(snap => { S[c] = snap.docs.map(d=>({...d.data(), id:d.id})); done(snap); render(); }, fail);
+  }
+  db.doc("settings/main").onSnapshot(snap => { if (snap.exists) S.settings = {...S.settings, ...snap.data()}; done(snap); render(); }, fail);
+}
+async function init(){
+  S.entries = LS.load("entries")||[]; S.coins = LS.load("coins")||[]; S.wifi = LS.load("wifi")||[]; S.maint = LS.load("maint")||[]; S.settings = {...S.settings, ...(LS.load("settings")||{})};
+  render();
+  try{ if (window.claude && typeof window.claude.use==="function") db = await window.claude.use("db"); }catch(e){ db=null; }
+  if (db){ S.mode="shared"; S.entries=[]; S.coins=[]; S.wifi=[]; S.maint=[]; setSync("","Loading…"); subscribe(); }
+  else { S.mode="local"; setSync("warn","Saved in this browser only"); }
+  render();
+}
+
+/* ================= unified money records ================= */
+// Every peso in or out, from all three logs, as one list.
+function allMoney(){
+  const rows = [];
+  for (const e of S.entries) rows.push({ts:e.ts, biz:e.biz, type:e.type, cat:e.category, amount:num(e.amount), note:e.note||"", src:"entries", id:e.id});
+  for (const c of S.coins) rows.push({ts:c.ts, biz:"pc", type:"in", cat:"Coin collection", amount:num(c.total), note:(c.by?("By "+c.by+". "):"")+(c.note||""), src:"coins", id:c.id});
+  for (const w of S.wifi) rows.push({ts:w.ts, biz:"wifi", type:"in", cat:"Piso WiFi collection", amount:num(w.total), note:(w.by?("By "+w.by+". "):"")+(w.note||""), src:"wifi", id:w.id});
+  for (const m of S.maint) if (num(m.cost)>0) rows.push({ts:m.ts, biz:"pc", type:"out", cat:"Maintenance", amount:num(m.cost), note:`${m.pc}: ${m.issue}`, src:"maint", id:m.id});
+  return rows;
+}
+function periodStart(p){
+  const d = new Date(); d.setHours(0,0,0,0);
+  if (p==="today") return d.getTime();
+  if (p==="week"){ d.setDate(d.getDate()-6); return d.getTime(); }
+  if (p==="month"){ d.setDate(1); return d.getTime(); }
+  if (p==="lastmonth"){ d.setDate(1); d.setMonth(d.getMonth()-1); return d.getTime(); }
+  if (p==="year"){ d.setMonth(0,1); return d.getTime(); }
+  return 0;
+}
+function periodEnd(p){ if (p==="lastmonth"){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(1); return d.getTime(); } return Infinity; }
+const inPeriod = (ts,p) => ts>=periodStart(p) && ts<periodEnd(p);
+const PERIODS = [["today","Today"],["week","Last 7 days"],["month","This month"],["lastmonth","Last month"],["year","This year"],["all","All time"]];
+const periodSel = (val, onch) => `<select style="width:auto" onchange="${onch}">${PERIODS.map(([v,l])=>`<option value="${v}" ${val===v?"selected":""}>${l}</option>`).join("")}</select>`;
+const periodLabel = p => (PERIODS.find(x=>x[0]===p)||[,""])[1];
+function totals(rows){ let i=0,o=0; for(const r of rows){ if(r.type==="in") i+=r.amount; else o+=r.amount; } return {i,o,net:i-o}; }
+
+/* ================= routing / render ================= */
+function current(){ const h=location.hash.slice(1); return VIEWS.some(v=>v[0]===h)?h:"dashboard"; }
+window.addEventListener("hashchange", ()=>{ render(); window.scrollTo(0,0); });
+function render(){
+  const cur = current();
+  $("#navlist").innerHTML = VIEWS.map(([k,l])=>`<a href="#${k}" class="${k===cur?"on":""}">${ICONS[k]}<span>${l}</span></a>`).join("");
+  const ae = document.activeElement, fid = ae && ae.id, caret = ae && ae.selectionStart;
+  $("#view").innerHTML = (S.canWrite?"":'<div class="banner">You have view-only access. Ask the owner for Contributor access to add records.</div>')
+    + ({dashboard:vDash, ledger:vLedger, coins:vCoins, wifi:vWifi, maint:vMaint, settings:vSettings})[cur]();
+  if (fid){ const el=document.getElementById(fid); if(el){ el.focus(); try{ el.setSelectionRange(caret,caret) }catch(e){} } }
+}
+
+/* ================= Dashboard ================= */
+function vDash(){
+  const p = S.dash.period;
+  const rows = allMoney().filter(r=>inPeriod(r.ts,p));
+  const all = totals(rows), pc = totals(rows.filter(r=>r.biz==="pc")), st = totals(rows.filter(r=>r.biz==="store")), wf = totals(rows.filter(r=>r.biz==="wifi"));
+  const wifiP = rows.filter(r=>r.src==="wifi").reduce((a,r)=>a+r.amount,0);
+  const coinsP = rows.filter(r=>r.src==="coins").reduce((a,r)=>a+r.amount,0);
+  const maintP = rows.filter(r=>r.src==="maint").reduce((a,r)=>a+r.amount,0);
+  const openM = S.maint.filter(m=>m.status!=="Done");
+
+  // 14-day chart
+  const days=[]; for(let i=13;i>=0;i--){ const d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-i); days.push({k:dayKey(d),d,i:0,o:0}); }
+  const idx = Object.fromEntries(days.map((d,i)=>[d.k,i]));
+  for (const r of allMoney()){ const i=idx[dayKey(r.ts)]; if(i!==undefined){ if(r.type==="in") days[i].i+=r.amount; else days[i].o+=r.amount; } }
+  const max = Math.max(1,...days.flatMap(d=>[d.i,d.o]));
+  const W=640,H=190,padL=8,bw=(W-padL*2)/14;
+  const bars = days.map((d,k)=>{ const x=padL+k*bw; const hi=(d.i/max)*(H-48), ho=(d.o/max)*(H-48); const w=(bw-10)/2;
+    const lbl=d.d.toLocaleDateString("en-PH",{month:"short",day:"numeric"});
+    return `<rect x="${x+4}" y="${H-24-hi}" width="${w}" height="${Math.max(hi,1)}" rx="2" fill="var(--in)"><title>${lbl} · In ${peso(d.i)}</title></rect>
+      <rect x="${x+5+w}" y="${H-24-ho}" width="${w}" height="${Math.max(ho,1)}" rx="2" fill="var(--out)"><title>${lbl} · Out ${peso(d.o)}</title></rect>
+      ${k%2===1?`<text x="${x+bw/2}" y="${H-8}" text-anchor="middle">${d.d.getDate()}</text>`:""}`; }).join("");
+
+  // per-PC coins in period
+  const pcTot = {}; for (const c of S.coins) if (inPeriod(c.ts,p)) for (const [k,v] of Object.entries(c.pcs||{})) pcTot[k]=(pcTot[k]||0)+num(v);
+  const pcRank = Object.entries(pcTot).sort((a,b)=>b[1]-a[1]); const pcMax = pcRank.length?pcRank[0][1]:1;
+
+  const recent = allMoney().sort((a,b)=>b.ts-a.ts).slice(0,8);
+  const bizCard = (key,t,extra) => `<div class="card bizcard ${key}"><div class="row"><b>${BIZ[key]}</b><span class="spacer"></span><span class="tag">${periodLabel(p)}</span></div>
+     <div class="mini"><div>Money in<b class="in">${peso0(t.i)}</b></div><div>Money out<b class="out">${peso0(t.o)}</b></div><div>Net<b class="${t.net>=0?"in":"out"}">${peso0(t.net)}</b></div></div>${extra||""}</div>`;
+  return `
+  <div class="row"><div><h1>Dashboard</h1><p class="sub">${new Date().toLocaleDateString("en-PH",{weekday:"long",month:"long",day:"numeric",year:"numeric"})}</p></div><span class="spacer"></span>
+    ${periodSel(p,"S.dash.period=this.value;render()")}</div>
+  <div class="grid kpis">
+    <div class="card kpi"><div class="l">Money in</div><div class="v in">${peso(all.i)}</div><div class="h">All businesses</div></div>
+    <div class="card kpi"><div class="l">Money out</div><div class="v out">${peso(all.o)}</div><div class="h">All businesses</div></div>
+    <div class="card kpi"><div class="l">Net</div><div class="v ${all.net>=0?"in":"out"}">${peso(all.net)}</div><div class="h">In − out</div></div>
+    <div class="card kpi"><div class="l">PCs needing repair</div><div class="v ${openM.length?"out":""}">${openM.length}</div><div class="h"><a href="#maint">Open maintenance tickets</a></div></div>
+  </div>
+  <div class="grid three" style="margin-top:14px">
+    ${bizCard("pc",pc,`<div class="row" style="margin-top:10px;font-size:13px;color:var(--muted)"><span>Coins collected: <b style="color:var(--ink)">${peso0(coinsP)}</b></span><span>Maintenance: <b style="color:var(--ink)">${peso0(maintP)}</b></span></div>`)}
+    ${bizCard("store",st)}
+    ${bizCard("wifi",wf,`<div class="row" style="margin-top:10px;font-size:13px;color:var(--muted)"><span>Collected: <b style="color:var(--ink)">${peso0(wifiP)}</b></span><span class="spacer"></span><a class="btn sm" href="#wifi">Record</a></div>`)}
+  </div>
+  ${capitalCard()}
+  <div class="grid two" style="margin-top:14px">
+    <div class="card"><div class="row"><b>Last 14 days</b><span class="spacer"></span><div class="legend"><span><i style="background:var(--in)"></i>In</span><span><i style="background:var(--out)"></i>Out</span></div></div>
+      <svg class="chart" viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Money in and out per day, last 14 days">${bars}</svg></div>
+    <div class="card"><div class="row"><b>Coins per PC</b><span class="spacer"></span><a class="btn sm" href="#coins">Record coins</a></div>
+      ${pcRank.length?pcRank.map(([k,v])=>`<div class="bar-row"><span>${esc(k)}</span><div class="bar-bg"><div class="bar-fg" style="background:var(--pc);width:${v/pcMax*100}%"></div></div><span class="n">${peso0(v)}</span></div>`).join(""):'<div class="empty">No coin collections in this period.</div>'}
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px;padding:12px 12px 4px">
+    <div class="row" style="padding:0 4px"><b>Recent activity</b><span class="spacer"></span><a class="btn sm" href="#ledger">See all</a></div>
+    ${recent.length?moneyTable(recent,false):'<div class="empty">Nothing recorded yet. Start with <a href="#ledger">Money In / Out</a>, <a href="#coins">Coin Collection</a> or <a href="#wifi">Piso WiFi</a>.</div>'}
+  </div>`;
+}
+function capitalCard(){
+  const cap = num(S.settings.capital);
+  const life = totals(allMoney());
+  const pct = cap>0 ? life.net/cap*100 : 0;
+  const bar = Math.max(0,Math.min(100,pct));
+  // average monthly net over months with records → months left to recover
+  const months = new Set(allMoney().map(r=>{const d=new Date(r.ts);return d.getFullYear()+"-"+d.getMonth();})).size;
+  const avg = months ? life.net/months : 0;
+  const left = cap - life.net;
+  const eta = left<=0 ? "Capital fully recovered" : avg>0 ? `About ${Math.ceil(left/avg)} more month${Math.ceil(left/avg)===1?"":"s"} at ${peso0(avg)}/month` : "Not earning back yet";
+  return `<div class="card" style="margin-top:14px">
+    <div class="row"><b>Capital & return</b><span class="tag">All time</span><span class="spacer"></span>${S.canWrite?'<a class="btn sm" href="#settings">Edit capital</a>':""}</div>
+    <div class="mini" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr))">
+      <div>Capital invested<b>${peso0(cap)}</b></div>
+      <div>Total net earned<b class="${life.net>=0?"in":"out"}">${peso0(life.net)}</b></div>
+      <div>Still to recover<b>${peso0(Math.max(0,left))}</b></div>
+      <div>Return on capital<b class="${pct>=0?"in":"out"}">${pct.toFixed(1)}%</b></div>
+    </div>
+    <div class="bar-bg" style="height:10px;margin-top:12px"><div class="bar-fg" style="background:var(--in);width:${bar}%"></div></div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px">${bar.toFixed(1)}% of capital earned back · ${eta}</div>
+  </div>`;
+}
+function moneyTable(rows, actions){
+  return `<div style="overflow-x:auto"><table><tr><th>Date</th><th>Business</th><th>Category</th><th class="hide-sm">Note</th><th class="n">Amount</th>${actions?"<th></th>":""}</tr>
+  ${rows.map(r=>`<tr><td style="white-space:nowrap">${fmtD(r.ts)}</td><td>${bizTag(r.biz)}</td><td>${esc(r.cat)}</td><td class="hide-sm" style="color:var(--muted)">${esc(r.note)}</td>
+    <td class="n ${r.type}">${r.type==="in"?"+":"−"}${peso(r.amount)}</td>
+    ${actions?`<td class="n">${S.canWrite?(r.src==="entries"?`<button class="btn sm ghost-red" onclick="askDelete('entries','${r.id}')">Delete</button>`:`<a class="btn sm" href="#${r.src}">Open</a>`):""}</td>`:""}</tr>`).join("")}</table></div>`;
+}
+
+/* ================= Money In / Out ================= */
+function vLedger(){
+  const f = S.led, d = S.draft;
+  const q = f.q.toLowerCase();
+  const rows = allMoney().filter(r=>inPeriod(r.ts,f.period) && (f.biz==="all"||r.biz===f.biz) && (f.type==="all"||r.type===f.type) && (!q || (r.cat+" "+r.note).toLowerCase().includes(q))).sort((a,b)=>b.ts-a.ts);
+  const t = totals(rows);
+  const cats = CATS[d.biz][d.type];
+  return `
+  <h1>Money In / Out</h1><p class="sub">Record every peso that comes in or goes out. Coin collections, Piso WiFi collections and maintenance costs are added automatically from their pages.</p>
+  ${S.canWrite?`<div class="card" style="margin-bottom:14px">
+    <div class="row" style="margin-bottom:12px">
+      <div class="seg">${Object.entries(BIZ).map(([k,l])=>`<button class="${d.biz===k?"on":""}" onclick="S.draft.biz='${k}';render()">${l}</button>`).join("")}</div>
+      <div class="seg io"><button class="i ${d.type==="in"?"on":""}" onclick="S.draft.type='in';render()">Money in</button><button class="o ${d.type==="out"?"on":""}" onclick="S.draft.type='out';render()">Money out</button></div>
+    </div>
+    <form class="form" onsubmit="event.preventDefault();addEntry(this)">
+      <label>Date<input name="date" type="date" value="${todayKey()}" required></label>
+      <label>Category<select name="category">${cats.map(c=>`<option>${c}</option>`).join("")}</select></label>
+      <label>Amount (₱)<input name="amount" type="number" step="0.01" min="0.01" inputmode="decimal" required></label>
+      <label>Note<input name="note" placeholder="Optional"></label>
+      <button class="btn ${d.type==="in"?"green":"red"}">${d.type==="in"?"+ Add money in":"− Add money out"}</button>
+    </form>
+    ${d.biz==="pc"&&d.type==="in"?'<p style="margin:10px 0 0;font-size:12px;color:var(--muted)">Tip: use <a href="#coins">Coin Collection</a> to record coins per PC.</p>':""}
+    ${d.biz==="wifi"&&d.type==="in"?'<p style="margin:10px 0 0;font-size:12px;color:var(--muted)">Tip: use <a href="#wifi">Piso WiFi</a> to record coins per machine.</p>':""}
+    ${d.biz==="pc"&&d.type==="out"?'<p style="margin:10px 0 0;font-size:12px;color:var(--muted)">Tip: log PC repairs on <a href="#maint">PC Maintenance</a> so the cost is tracked per PC.</p>':""}
+  </div>`:""}
+  <div class="row" style="margin-bottom:10px">
+    <select style="width:auto" onchange="S.led.biz=this.value;render()">${[["all","All businesses"],["pc","Computer Shop"],["store","Sari-Sari Store"],["wifi","Piso WiFi"]].map(([v,l])=>`<option value="${v}" ${f.biz===v?"selected":""}>${l}</option>`).join("")}</select>
+    <select style="width:auto" onchange="S.led.type=this.value;render()">${[["all","In and out"],["in","Money in"],["out","Money out"]].map(([v,l])=>`<option value="${v}" ${f.type===v?"selected":""}>${l}</option>`).join("")}</select>
+    ${periodSel(f.period,"S.led.period=this.value;render()")}
+    <input id="ledQ" style="width:auto;flex:1;min-width:140px" placeholder="Search…" value="${esc(f.q)}" oninput="S.led.q=this.value;render()">
+  </div>
+  <div class="row" style="margin-bottom:12px"><span class="tag" style="background:var(--in-soft);color:var(--in)">In ${peso(t.i)}</span><span class="tag" style="background:var(--out-soft);color:var(--out)">Out ${peso(t.o)}</span><span class="tag">Net ${peso(t.net)}</span><span class="tag">${rows.length} records</span></div>
+  <div class="card" style="padding:4px 12px">${rows.length?moneyTable(rows,true):'<div class="empty">No records match.</div>'}</div>`;
+}
+async function addEntry(f){
+  const d = Object.fromEntries(new FormData(f));
+  try{
+    await writeDoc("entries", uid(), {ts:keyToTs(d.date), biz:S.draft.biz, type:S.draft.type, category:d.category, amount:num(d.amount), note:d.note.trim()});
+    f.amount.value=""; f.note.value=""; toast(S.draft.type==="in"?"Money in recorded":"Money out recorded");
+  }catch(e){}
+}
+
+/* ================= Coin Collection ================= */
+function vCoins(){
+  const pcs = S.settings.pcs||[];
+  const list = S.coins.filter(c=>inPeriod(c.ts,S.coinRange)).sort((a,b)=>b.ts-a.ts);
+  const tot = list.reduce((a,c)=>a+num(c.total),0);
+  const per = {}; for (const c of list) for (const [k,v] of Object.entries(c.pcs||{})) per[k]=(per[k]||0)+num(v);
+  const allPcs = [...new Set([...pcs, ...Object.keys(per)])];
+  const days = new Set(list.map(c=>dayKey(c.ts))).size || 1;
+  return `
+  <h1>Coin Collection</h1><p class="sub">When you take the coins out of each PC's coin box, enter the amount per PC here. It counts as money in for the Computer Shop.</p>
+  ${S.canWrite?`<div class="card" style="margin-bottom:14px">
+    <form onsubmit="event.preventDefault();addCoins(this)">
+      <div class="form" style="margin-bottom:12px">
+        <label>Date<input name="date" type="date" value="${todayKey()}" required></label>
+        <label>Collected by<input name="by" placeholder="Name"></label>
+        <label style="grid-column:span 2">Note<input name="note" placeholder="Optional"></label>
+      </div>
+      ${pcs.length?`<div class="pcgrid">${pcs.map((p,i)=>`<label>${esc(p)}<input name="pc_${i}" type="number" min="0" step="1" inputmode="numeric" placeholder="0" oninput="coinSum(this.form)"></label>`).join("")}</div>`
+        :'<p class="empty">No PCs set up. Add them in <a href="#settings">Settings</a>.</p>'}
+      <div class="row" style="margin-top:14px"><span>Total: <b id="coinTotal" style="font-size:18px">₱0</b></span><span class="spacer"></span><button class="btn green" ${pcs.length?"":"disabled"}>Save collection</button></div>
+    </form></div>`:""}
+  <div class="row" style="margin-bottom:12px"><b>Summary</b><span class="spacer"></span>${periodSel(S.coinRange,"S.coinRange=this.value;render()")}</div>
+  <div class="grid kpis" style="margin-bottom:14px">
+    <div class="card kpi"><div class="l">Coins collected</div><div class="v in">${peso(tot)}</div><div class="h">${list.length} collection${list.length===1?"":"s"}</div></div>
+    <div class="card kpi"><div class="l">Average per day</div><div class="v">${peso(tot/days)}</div><div class="h">Over ${days} day${days===1?"":"s"} with collections</div></div>
+    <div class="card kpi"><div class="l">Average per PC</div><div class="v">${peso(allPcs.length?tot/allPcs.length:0)}</div><div class="h">${allPcs.length} PCs</div></div>
+  </div>
+  <div class="grid two">
+    <div class="card" style="padding:12px 12px 4px"><b style="padding:0 4px">Per PC</b>
+      ${allPcs.length?`<table><tr><th>PC</th><th class="n">Collected</th><th class="n">Repairs</th></tr>${allPcs.map(p=>{ const rep=S.maint.filter(m=>m.pc===p && inPeriod(m.ts,S.coinRange)).reduce((a,m)=>a+num(m.cost),0);
+        return `<tr><td>${esc(p)}</td><td class="n in">${peso0(per[p]||0)}</td><td class="n ${rep?"out":""}">${rep?peso0(rep):"—"}</td></tr>`;}).join("")}</table>`:'<div class="empty">No PCs yet.</div>'}
+    </div>
+    <div class="card" style="padding:12px 12px 4px"><b style="padding:0 4px">Collection history</b>
+      ${list.length?`<table><tr><th>Date</th><th class="hide-sm">By</th><th class="n">Total</th><th></th></tr>${list.map(c=>`<tr><td>${fmtD(c.ts)}</td><td class="hide-sm">${esc(c.by||"—")}</td><td class="n in">${peso(c.total)}</td>
+        <td class="n"><button class="btn sm" onclick="showCoins('${c.id}')">View</button></td></tr>`).join("")}</table>`:'<div class="empty">No collections in this period.</div>'}
+    </div>
+  </div>`;
+}
+function coinSum(f){ let t=0; for (const el of f.querySelectorAll("input[name^=pc_]")) t+=num(el.value); $("#coinTotal").textContent=peso0(t); }
+async function addCoins(f){
+  const pcs = S.settings.pcs||[]; const d = Object.fromEntries(new FormData(f));
+  const breakdown = {}; let total=0;
+  pcs.forEach((p,i)=>{ const v=num(d["pc_"+i]); if(v>0){ breakdown[p]=v; total+=v; } });
+  if (!total){ toast("Enter at least one PC amount."); return; }
+  try{ await writeDoc("coins", uid(), {ts:keyToTs(d.date), by:d.by.trim(), note:d.note.trim(), pcs:breakdown, total}); f.reset(); f.date.value=todayKey(); $("#coinTotal").textContent="₱0"; toast("Coins recorded: "+peso0(total)); }catch(e){}
+}
+function showCoins(id){
+  const c = S.coins.find(x=>x.id===id); if(!c) return;
+  modal(`<h2>Coin collection · ${fmtD(c.ts)}</h2>
+    <p style="color:var(--muted);margin-top:-8px">${c.by?"Collected by "+esc(c.by)+". ":""}${esc(c.note||"")}</p>
+    <table>${Object.entries(c.pcs||{}).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${peso(v)}</td></tr>`).join("")}<tr><td><b>Total</b></td><td class="n"><b>${peso(c.total)}</b></td></tr></table>
+    <div class="row" style="margin-top:14px">${S.canWrite?`<button class="btn ghost-red" onclick="askDelete('coins','${id}')">Delete</button>`:""}<span class="spacer"></span><button class="btn" onclick="closeModal()">Close</button></div>`);
+}
+
+/* ================= Piso WiFi ================= */
+function vWifi(){
+  const units = S.settings.wifiUnits||[];
+  const list = S.wifi.filter(c=>inPeriod(c.ts,S.wifiRange)).sort((a,b)=>b.ts-a.ts);
+  const tot = list.reduce((a,c)=>a+num(c.total),0);
+  const per = {}; for (const c of list) for (const [k,v] of Object.entries(c.units||{})) per[k]=(per[k]||0)+num(v);
+  const allU = [...new Set([...units, ...Object.keys(per)])];
+  const days = new Set(list.map(c=>dayKey(c.ts))).size || 1;
+  const costs = S.entries.filter(e=>e.biz==="wifi"&&e.type==="out"&&inPeriod(e.ts,S.wifiRange)).reduce((a,e)=>a+num(e.amount),0);
+  return `
+  <h1>Piso WiFi</h1><p class="sub">Enter the coins taken out of each Piso WiFi machine. Record its internet, electricity and repair costs under <a href="#ledger">Money In / Out</a> → Piso WiFi.</p>
+  ${S.canWrite?`<div class="card" style="margin-bottom:14px">
+    <form onsubmit="event.preventDefault();addWifi(this)">
+      <div class="form" style="margin-bottom:12px">
+        <label>Date<input name="date" type="date" value="${todayKey()}" required></label>
+        <label>Collected by<input name="by" placeholder="Name"></label>
+        <label style="grid-column:span 2">Note<input name="note" placeholder="Optional"></label>
+      </div>
+      ${units.length?`<div class="pcgrid">${units.map((u,i)=>`<label>${esc(u)}<input name="u_${i}" type="number" min="0" step="1" inputmode="numeric" placeholder="0" oninput="wifiSum(this.form)"></label>`).join("")}</div>`
+        :'<p class="empty">No machines set up. Add them in <a href="#settings">Settings</a>.</p>'}
+      <div class="row" style="margin-top:14px"><span>Total: <b id="wifiTotal" style="font-size:18px">₱0</b></span><span class="spacer"></span><button class="btn green" ${units.length?"":"disabled"}>Save collection</button></div>
+    </form></div>`:""}
+  <div class="row" style="margin-bottom:12px"><b>Summary</b><span class="spacer"></span>${periodSel(S.wifiRange,"S.wifiRange=this.value;render()")}</div>
+  <div class="grid kpis" style="margin-bottom:14px">
+    <div class="card kpi"><div class="l">Collected</div><div class="v in">${peso(tot)}</div><div class="h">${list.length} collection${list.length===1?"":"s"}</div></div>
+    <div class="card kpi"><div class="l">Average per day</div><div class="v">${peso(tot/days)}</div><div class="h">Over ${days} day${days===1?"":"s"} with collections</div></div>
+    <div class="card kpi"><div class="l">Costs</div><div class="v out">${peso(costs)}</div><div class="h">Internet, electricity, repairs</div></div>
+    <div class="card kpi"><div class="l">Net</div><div class="v ${tot-costs>=0?"in":"out"}">${peso(tot-costs)}</div><div class="h">Collected − costs</div></div>
+  </div>
+  <div class="grid two">
+    <div class="card" style="padding:12px 12px 4px"><b style="padding:0 4px">Per machine</b>
+      ${allU.length?`<table><tr><th>Machine</th><th class="n">Collected</th></tr>${allU.map(u=>`<tr><td>${esc(u)}</td><td class="n in">${peso0(per[u]||0)}</td></tr>`).join("")}</table>`:'<div class="empty">No machines yet.</div>'}
+    </div>
+    <div class="card" style="padding:12px 12px 4px"><b style="padding:0 4px">Collection history</b>
+      ${list.length?`<table><tr><th>Date</th><th class="hide-sm">By</th><th class="n">Total</th><th></th></tr>${list.map(c=>`<tr><td>${fmtD(c.ts)}</td><td class="hide-sm">${esc(c.by||"—")}</td><td class="n in">${peso(c.total)}</td>
+        <td class="n"><button class="btn sm" onclick="showWifi('${c.id}')">View</button></td></tr>`).join("")}</table>`:'<div class="empty">No collections in this period.</div>'}
+    </div>
+  </div>`;
+}
+function wifiSum(f){ let t=0; for (const el of f.querySelectorAll("input[name^=u_]")) t+=num(el.value); $("#wifiTotal").textContent=peso0(t); }
+async function addWifi(f){
+  const units = S.settings.wifiUnits||[]; const d = Object.fromEntries(new FormData(f));
+  const breakdown = {}; let total=0;
+  units.forEach((u,i)=>{ const v=num(d["u_"+i]); if(v>0){ breakdown[u]=v; total+=v; } });
+  if (!total){ toast("Enter at least one machine amount."); return; }
+  try{ await writeDoc("wifi", uid(), {ts:keyToTs(d.date), by:d.by.trim(), note:d.note.trim(), units:breakdown, total}); f.reset(); f.date.value=todayKey(); $("#wifiTotal").textContent="₱0"; toast("Piso WiFi recorded: "+peso0(total)); }catch(e){}
+}
+function showWifi(id){
+  const c = S.wifi.find(x=>x.id===id); if(!c) return;
+  modal(`<h2>Piso WiFi collection · ${fmtD(c.ts)}</h2>
+    <p style="color:var(--muted);margin-top:-8px">${c.by?"Collected by "+esc(c.by)+". ":""}${esc(c.note||"")}</p>
+    <table>${Object.entries(c.units||{}).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${peso(v)}</td></tr>`).join("")}<tr><td><b>Total</b></td><td class="n"><b>${peso(c.total)}</b></td></tr></table>
+    <div class="row" style="margin-top:14px">${S.canWrite?`<button class="btn ghost-red" onclick="askDelete('wifi','${id}')">Delete</button>`:""}<span class="spacer"></span><button class="btn" onclick="closeModal()">Close</button></div>`);
+}
+
+/* ================= Maintenance ================= */
+function vMaint(){
+  const pcs = S.settings.pcs||[];
+  const list = S.maint.filter(m=>S.mFilter==="all"||(S.mFilter==="open"?m.status!=="Done":m.status==="Done")).sort((a,b)=>(a.status==="Done")-(b.status==="Done")||b.ts-a.ts);
+  const openN = S.maint.filter(m=>m.status!=="Done").length;
+  const monthCost = S.maint.filter(m=>inPeriod(m.ts,"month")).reduce((a,m)=>a+num(m.cost),0);
+  const yearCost = S.maint.filter(m=>inPeriod(m.ts,"year")).reduce((a,m)=>a+num(m.cost),0);
+  const perPc = {}; for (const m of S.maint) { perPc[m.pc]=perPc[m.pc]||{n:0,c:0}; perPc[m.pc].n++; perPc[m.pc].c+=num(m.cost); }
+  const worst = Object.entries(perPc).sort((a,b)=>b[1].c-a[1].c)[0];
+  return `
+  <div class="row"><div><h1>PC Maintenance</h1><p class="sub">Log every repair or upkeep. Costs count as money out for the Computer Shop.</p></div><span class="spacer"></span>
+    ${S.canWrite?'<button class="btn primary" onclick="editMaint()">+ Log maintenance</button>':""}</div>
+  <div class="grid kpis" style="margin-bottom:14px">
+    <div class="card kpi"><div class="l">Open issues</div><div class="v ${openN?"out":""}">${openN}</div><div class="h">Not yet fixed</div></div>
+    <div class="card kpi"><div class="l">Cost this month</div><div class="v out">${peso(monthCost)}</div><div class="h">This year ${peso0(yearCost)}</div></div>
+    <div class="card kpi"><div class="l">Most repair cost</div><div class="v" style="font-size:20px">${worst?esc(worst[0]):"—"}</div><div class="h">${worst?`${worst[1].n} jobs · ${peso0(worst[1].c)} all time`:"No records yet"}</div></div>
+  </div>
+  <div class="row" style="margin-bottom:10px"><div class="seg">${[["all","All"],["open","Open"],["done","Done"]].map(([v,l])=>`<button class="${S.mFilter===v?"on":""}" onclick="S.mFilter='${v}';render()">${l}</button>`).join("")}</div></div>
+  <div class="card" style="padding:4px 12px;overflow-x:auto">
+  ${list.length?`<table><tr><th>Date</th><th>PC</th><th>Issue / work done</th><th class="hide-sm">Technician</th><th class="n">Cost</th><th>Status</th><th></th></tr>
+    ${list.map(m=>`<tr><td style="white-space:nowrap">${fmtD(m.ts)}</td><td><b>${esc(m.pc)}</b></td>
+      <td>${esc(m.issue)}${m.action?`<div style="color:var(--muted);font-size:12px">${esc(m.action)}</div>`:""}</td><td class="hide-sm">${esc(m.tech||"—")}</td>
+      <td class="n ${num(m.cost)?"out":""}">${num(m.cost)?peso(m.cost):"—"}</td>
+      <td><span class="tag ${m.status==="Done"?"done":"open"}">${m.status==="Done"?"Done":"Open"}</span></td>
+      <td class="n" style="white-space:nowrap">${S.canWrite?`${m.status!=="Done"?`<button class="btn sm" onclick="markDone('${m.id}')">Mark fixed</button> `:""}<button class="btn sm" onclick="editMaint('${m.id}')">Edit</button>`:""}</td></tr>`).join("")}</table>`
+    :`<div class="empty">${S.maint.length?"Nothing here.":"No maintenance logged yet."}</div>`}
+  </div>`;
+}
+function editMaint(id){
+  const pcs = S.settings.pcs||[];
+  const m = S.maint.find(x=>x.id===id) || {ts:Date.now(), pc:pcs[0]||"", issue:"", action:"", cost:"", tech:"", status:"Open"};
+  const opts = [...new Set([...pcs, m.pc].filter(Boolean)), "Other / whole shop"];
+  modal(`<h2>${id?"Edit maintenance":"Log maintenance"}</h2>
+   <form class="form" onsubmit="event.preventDefault();saveMaint(${id?`'${id}'`:"null"},this)">
+    <label>Date<input name="date" type="date" value="${dayKey(m.ts)}" required></label>
+    <label>PC<select name="pc">${opts.map(p=>`<option ${p===m.pc?"selected":""}>${esc(p)}</option>`).join("")}</select></label>
+    <label class="full">Issue<input name="issue" required placeholder="e.g. No display, coin slot jammed, slow" value="${esc(m.issue)}"></label>
+    <label class="full">Work done / parts replaced<input name="action" placeholder="e.g. Replaced RAM 8GB, cleaned coin acceptor" value="${esc(m.action)}"></label>
+    <label>Cost (₱)<input name="cost" type="number" step="0.01" min="0" inputmode="decimal" value="${esc(m.cost)}"></label>
+    <label>Technician<input name="tech" value="${esc(m.tech)}"></label>
+    <label>Status<select name="status"><option ${m.status!=="Done"?"selected":""}>Open</option><option ${m.status==="Done"?"selected":""}>Done</option></select></label>
+    <div class="row full" style="margin-top:6px">${id?`<button type="button" class="btn ghost-red" onclick="askDelete('maint','${id}')">Delete</button>`:""}<span class="spacer"></span>
+      <button type="button" class="btn" onclick="closeModal()">Cancel</button><button class="btn primary">Save</button></div>
+   </form>`);
+}
+async function saveMaint(id,f){
+  const d = Object.fromEntries(new FormData(f));
+  const rec = {ts:keyToTs(d.date), pc:d.pc, issue:d.issue.trim(), action:d.action.trim(), cost:num(d.cost), tech:d.tech.trim(), status:d.status};
+  try{ await writeDoc("maint", id||uid(), rec); closeModal(); toast(id?"Maintenance updated":"Maintenance logged"); }catch(e){}
+}
+async function markDone(id){ try{ await patchDoc("maint", id, {status:"Done"}); toast("Marked as fixed"); }catch(e){} }
+
+/* ================= Settings ================= */
+function vSettings(){
+  const pcs = S.settings.pcs||[];
+  return `
+  <h1>Settings</h1><p class="sub">${S.mode==="shared"?"Everything here is shared with the people you give access to this app.":"Data is saved in this browser only."}</p>
+  <div class="card" style="max-width:640px;margin-bottom:14px">
+    <h3>Capital</h3>
+    <p style="color:var(--muted);margin-top:0">Total money invested in all the businesses. The dashboard tracks how much of it you've earned back.</p>
+    <div class="row"><span style="font-weight:600">₱</span><input type="number" min="0" step="1" value="${num(S.settings.capital)}" onchange="saveSettings({...S.settings,capital:num(this.value)});toast('Capital saved')" ${S.canWrite?"":"disabled"} style="max-width:220px"></div>
+  </div>
+  <div class="card" style="max-width:640px">
+    <h3>Computer Shop PCs</h3>
+    <p style="color:var(--muted);margin-top:0">These show up in Coin Collection and PC Maintenance.</p>
+    ${pcs.map((p,i)=>`<div class="row" style="margin-bottom:6px"><input value="${esc(p)}" onchange="renamePc(${i},this.value)" ${S.canWrite?"":"disabled"} style="flex:1">${S.canWrite?`<button class="btn sm ghost-red" onclick="removePc(${i})">Remove</button>`:""}</div>`).join("")}
+    ${S.canWrite?`<div class="row" style="margin-top:10px"><button class="btn" onclick="addPc()">+ Add PC</button></div>`:""}
+  </div>
+  <div class="card" style="max-width:640px;margin-top:14px">
+    <h3>Piso WiFi machines</h3>
+    <p style="color:var(--muted);margin-top:0">These show up on the Piso WiFi page.</p>
+    ${(S.settings.wifiUnits||[]).map((u,i)=>`<div class="row" style="margin-bottom:6px"><input value="${esc(u)}" onchange="renameUnit(${i},this.value)" ${S.canWrite?"":"disabled"} style="flex:1">${S.canWrite?`<button class="btn sm ghost-red" onclick="removeUnit(${i})">Remove</button>`:""}</div>`).join("")}
+    ${S.canWrite?`<div class="row" style="margin-top:10px"><button class="btn" onclick="addUnit()">+ Add machine</button></div>`:""}
+  </div>`;
+}
+function addPc(){ const pcs=[...(S.settings.pcs||[])]; let n=pcs.length+1, name; do{ name="PC-"+pad2(n++); }while(pcs.includes(name)); pcs.push(name); saveSettings({...S.settings,pcs}); }
+function renamePc(i,v){ v=v.trim(); if(!v) return render(); const pcs=[...S.settings.pcs]; pcs[i]=v; saveSettings({...S.settings,pcs}); }
+function addUnit(){ const u=[...(S.settings.wifiUnits||[])]; let n=u.length+1, name; do{ name="WiFi-"+(n++); }while(u.includes(name)); u.push(name); saveSettings({...S.settings,wifiUnits:u}); }
+function renameUnit(i,v){ v=v.trim(); if(!v) return render(); const u=[...S.settings.wifiUnits]; u[i]=v; saveSettings({...S.settings,wifiUnits:u}); }
+function removeUnit(i){ const u=[...S.settings.wifiUnits]; u.splice(i,1); saveSettings({...S.settings,wifiUnits:u}); }
+function removePc(i){ const pcs=[...S.settings.pcs]; pcs.splice(i,1); saveSettings({...S.settings,pcs}); }
+
+/* ================= modal / delete ================= */
+function modal(html){ $("#modalRoot").innerHTML=`<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`; const f=$("#modalRoot input:not([type=date])"); if(f) f.focus(); }
+function closeModal(){ $("#modalRoot").innerHTML=""; }
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+function askDelete(coll,id){
+  modal(`<h2>Delete this record?</h2><p>This removes it from your totals. It can't be undone.</p>
+    <div class="row"><span class="spacer"></span><button class="btn" onclick="closeModal()">Cancel</button><button class="btn red" onclick="deleteDoc('${coll}','${id}').then(()=>{closeModal();toast('Deleted')}).catch(()=>{})">Delete</button></div>`);
+}
+
+init();
+</script>
+</body>
+</html>
